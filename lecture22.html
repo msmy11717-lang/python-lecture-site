@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第22回 Claude CodeとGitの連携 | Python講義サイト</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0e14; --bg2:#111520; --bg3:#181d2a; --bg4:#1e2436;
+  --accent:#4fffb0; --accent2:#00c8ff;
+  --text:#e8eaf0; --text2:#8890a8; --text3:#545d78;
+  --border:rgba(255,255,255,0.06); --border2:rgba(79,255,176,0.2);
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(79,255,176,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,255,176,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+nav{position:sticky;top:0;z-index:100;background:rgba(11,14,20,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);letter-spacing:0.05em;text-decoration:none;}
+.nav-back{color:var(--text2);font-size:0.85rem;padding:6px 14px;border-radius:6px;transition:all 0.2s;text-decoration:none;}
+.nav-back:hover{color:var(--accent);background:rgba(79,255,176,0.08);}
+main{max-width:860px;margin:0 auto;padding:48px 40px 80px;position:relative;z-index:1;}
+.detail-hero{margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
+.detail-num{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent);background:rgba(79,255,176,0.08);border:1px solid var(--border2);padding:4px 12px;border-radius:4px;display:inline-block;margin-bottom:16px;}
+.detail-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,#fff 40%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.detail-desc{color:var(--text2);font-size:1rem;max-width:600px;}
+.content-block{margin-bottom:40px;}
+.block-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.block-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.block-text{color:var(--text2);font-size:0.92rem;line-height:1.8;margin-bottom:16px;}
+.code-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:16px 0;}
+.code-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--accent);}
+.copy-btn{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);background:none;border:1px solid var(--border);padding:3px 10px;border-radius:4px;cursor:pointer;transition:all 0.2s;}
+.copy-btn:hover{color:var(--accent);border-color:var(--border2);}
+pre{padding:20px 24px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:0.85rem;line-height:1.7;color:var(--text);}
+pre::-webkit-scrollbar{height:4px;}
+pre::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+.point-box{background:rgba(79,255,176,0.04);border:1px solid var(--border2);border-radius:var(--radius);padding:20px 24px;margin:16px 0;}
+.point-list{list-style:none;}
+.point-list li{font-size:0.88rem;color:var(--text2);padding:4px 0 4px 16px;position:relative;}
+.point-list li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:0.75rem;top:6px;}
+.task-box{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.2);border-radius:var(--radius);padding:24px;}
+.task-box-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:var(--accent2);margin-bottom:12px;}
+.task-list{list-style:none;}
+.task-list li{font-size:0.88rem;color:var(--text2);padding:5px 0 5px 20px;position:relative;}
+.task-list li::before{content:'□';position:absolute;left:0;color:var(--accent2);}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;}
+.summary-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.summary-card-num{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--accent);margin-bottom:4px;}
+.summary-card-title{font-family:'Syne',sans-serif;font-weight:600;font-size:0.82rem;margin-bottom:4px;}
+.summary-card-desc{font-size:0.78rem;color:var(--text3);}
+.detail-nav{display:flex;justify-content:space-between;align-items:center;margin-top:60px;padding-top:32px;border-top:1px solid var(--border);}
+.detail-nav-btn{font-family:'Syne',sans-serif;font-weight:600;font-size:0.88rem;color:var(--text2);background:var(--bg2);border:1px solid var(--border);padding:10px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;}
+.detail-nav-btn:hover{color:var(--accent);border-color:var(--border2);}
+.detail-nav-btn.disabled{opacity:0.3;pointer-events:none;}
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:32px 40px;text-align:center;color:var(--text3);font-size:0.8rem;font-family:'JetBrains Mono',monospace;}
+@media(max-width:600px){.summary-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="lecture_site.html">PY_LECTURE</a>
+  <a class="nav-back" href="lecture_site.html">← 一覧に戻る</a>
+</nav>
+<main>
+  <div class="detail-hero">
+    <div class="detail-num">LECTURE 22</div>
+    <h1 class="detail-title">Claude CodeとGitの連携</h1>
+    <p class="detail-desc">第18〜21回の統合。Claude CodeがGitを自動操作する仕組みを理解し、日本語指示でadd・commit・pushまで任せる実践的な使い方と全操作まとめを習得する。</p>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">Claude CodeはGitを自動操作できる</div>
+    <div class="block-text">Claude CodeはAIエージェントとして動くため、Gitコマンドもツールとして自律的に実行できます。「ファイルを変更してコミットして」と日本語で指示するだけで、add・commit・pushまで自動で処理します。</div>
+    <div class="point-box"><ul class="point-list">
+      <li>git add・git commit・git push をClaude Codeが代わりに実行する</li>
+      <li>コミットメッセージも文脈から自動生成する（日本語での指定も可）</li>
+      <li>ブランチの作成・切り替え・マージも指示できる</li>
+      <li>危険な操作（force push等）は事前に確認を求める（安全設計）</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">日本語指示でadd・commit・pushまで任せる</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">Claude Codeへの日本語指示例</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre">【指示例①：コミットだけ】
+「今の変更をコミットして。メッセージは『lecture22.htmlを追加』で」
+
+→ Claude Codeが実行するコマンド：
+  git add lecture22.html
+  git commit -m "lecture22.htmlを追加"
+
+【指示例②：GitHubまで一気に】
+「今の変更をコミットしてGitHubにpushして」
+
+→ Claude Codeが実行するコマンド：
+  git add .
+  git commit -m "変更内容を自動要約したメッセージ"
+  git push origin main
+
+【指示例③：履歴確認】
+「最近のコミット履歴を見せて」
+
+→ Claude Codeが実行するコマンド：
+  git log --oneline</pre>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">git log --oneline で履歴を確認する</div>
+    <div class="block-text">コミット履歴はこのコマンドで確認するのが最もシンプルです。Claude Codeに「git log を確認して」と伝えると、自動で実行して結果を教えてくれます。</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">ターミナル（履歴確認）</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre"># 1行ずつコンパクトに履歴を表示
+git log --oneline
+
+# 出力例：
+e697081 lecture22.htmlを追加
+6d4aaf6 ブランチ上でメモを追加
+cca65dc 2回目のメモを追加
+5102be4 最初のメモを追加</pre>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">第18〜22回の全操作まとめ</div>
+    <div class="summary-grid">
+      <div class="summary-card"><div class="summary-card-num">LECTURE 18</div><div class="summary-card-title">Gitの概念</div><div class="summary-card-desc">3つの場所・コミット＝セーブポイントの考え方。</div></div>
+      <div class="summary-card"><div class="summary-card-num">LECTURE 19</div><div class="summary-card-title">基本操作</div><div class="summary-card-desc">git init・add・commit・log の4コマンド。</div></div>
+      <div class="summary-card"><div class="summary-card-num">LECTURE 20</div><div class="summary-card-title">ブランチ</div><div class="summary-card-desc">作業の分岐・branch・checkout -b・merge。</div></div>
+      <div class="summary-card"><div class="summary-card-num">LECTURE 21</div><div class="summary-card-title">GitHub</div><div class="summary-card-desc">クラウド連携・remote add・push・pull。</div></div>
+      <div class="summary-card"><div class="summary-card-num">LECTURE 22</div><div class="summary-card-title">Claude Code連携</div><div class="summary-card-desc">日本語指示でGit操作を自動化。全操作の統合。</div></div>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">確認課題</div>
+    <div class="task-box">
+      <div class="task-box-title">✓ この講義の課題</div>
+      <ul class="task-list">
+        <li>Claude Codeに「今の変更をコミットしてGitHubにpushして」と日本語で指示して実行させる</li>
+        <li>git log --oneline でコミット履歴が積み上がっていることを確認する</li>
+        <li>GitHubのリポジトリページを開いて、pushしたファイルが表示されていることを確認する</li>
+        <li>第18〜22回の全操作（init・add・commit・push・branch・merge）を紙に書いてフローにまとめる</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="detail-nav">
+    <a class="detail-nav-btn" href="lecture21.html">← 前の講義</a>
+    <a class="detail-nav-btn" href="lecture_site.html">一覧に戻る</a>
+    <span class="detail-nav-btn disabled">次の講義 →</span>
+  </div>
+</main>
+<footer>Python講義サイト — LECTURE 22 / 22</footer>
+<script>
+function copyCode(btn) {
+  navigator.clipboard.writeText(btn.closest('.code-block').querySelector('pre').textContent)
+    .then(()=>{ btn.textContent='コピー済'; setTimeout(()=>btn.textContent='コピー',1500); });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第05回 Claude API呼び出し | Python講義サイト</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0e14; --bg2:#111520; --bg3:#181d2a; --bg4:#1e2436;
+  --accent:#4fffb0; --accent2:#00c8ff;
+  --text:#e8eaf0; --text2:#8890a8; --text3:#545d78;
+  --border:rgba(255,255,255,0.06); --border2:rgba(79,255,176,0.2);
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(79,255,176,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,255,176,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+nav{position:sticky;top:0;z-index:100;background:rgba(11,14,20,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);letter-spacing:0.05em;text-decoration:none;}
+.nav-back{color:var(--text2);font-size:0.85rem;padding:6px 14px;border-radius:6px;transition:all 0.2s;text-decoration:none;}
+.nav-back:hover{color:var(--accent);background:rgba(79,255,176,0.08);}
+main{max-width:860px;margin:0 auto;padding:48px 40px 80px;position:relative;z-index:1;}
+.detail-hero{margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
+.detail-num{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent);background:rgba(79,255,176,0.08);border:1px solid var(--border2);padding:4px 12px;border-radius:4px;display:inline-block;margin-bottom:16px;}
+.detail-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,#fff 40%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.detail-desc{color:var(--text2);font-size:1rem;max-width:600px;}
+.content-block{margin-bottom:40px;}
+.block-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.block-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.block-text{color:var(--text2);font-size:0.92rem;line-height:1.8;margin-bottom:16px;}
+.code-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:16px 0;}
+.code-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--accent);}
+.copy-btn{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);background:none;border:1px solid var(--border);padding:3px 10px;border-radius:4px;cursor:pointer;transition:all 0.2s;}
+.copy-btn:hover{color:var(--accent);border-color:var(--border2);}
+pre{padding:20px 24px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:0.85rem;line-height:1.7;color:var(--text);}
+pre::-webkit-scrollbar{height:4px;}
+pre::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+.point-box{background:rgba(79,255,176,0.04);border:1px solid var(--border2);border-radius:var(--radius);padding:20px 24px;margin:16px 0;}
+.point-list{list-style:none;}
+.point-list li{font-size:0.88rem;color:var(--text2);padding:4px 0 4px 16px;position:relative;}
+.point-list li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:0.75rem;top:6px;}
+.task-box{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.2);border-radius:var(--radius);padding:24px;}
+.task-box-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:var(--accent2);margin-bottom:12px;}
+.task-list{list-style:none;}
+.task-list li{font-size:0.88rem;color:var(--text2);padding:5px 0 5px 20px;position:relative;}
+.task-list li::before{content:'□';position:absolute;left:0;color:var(--accent2);}
+.output-block{background:#0a0c10;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:12px 0;}
+.output-header{padding:8px 16px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);}
+.output-body{padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:#50fa7b;line-height:1.8;}
+.detail-nav{display:flex;justify-content:space-between;align-items:center;margin-top:60px;padding-top:32px;border-top:1px solid var(--border);}
+.detail-nav-btn{font-family:'Syne',sans-serif;font-weight:600;font-size:0.88rem;color:var(--text2);background:var(--bg2);border:1px solid var(--border);padding:10px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;}
+.detail-nav-btn:hover{color:var(--accent);border-color:var(--border2);}
+.detail-nav-btn.disabled{opacity:0.3;pointer-events:none;}
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:32px 40px;text-align:center;color:var(--text3);font-size:0.8rem;font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="lecture_site.html">PY_LECTURE</a>
+  <a class="nav-back" href="lecture_site.html">← 一覧に戻る</a>
+</nav>
+<main>
+  <div class="detail-hero">
+    <div class="detail-num">LECTURE 05</div>
+    <h1 class="detail-title">Claude API呼び出し</h1>
+    <p class="detail-desc">AnthropicのAPIキー取得・anthropicライブラリでClaudeを実際に呼び出す。f文字列・辞書も習得。</p>
+  </div>
+  <div class="content-block"><div class="block-label">APIキーとは</div><div class="block-text">Claudeのシステムに入るための「あなた専用のパスワード」です。console.anthropic.comで取得します。漏れると他人があなたのキーで使い放題になるため絶対に公開しないでください。</div><div class="point-box"><ul class="point-list"><li>console.anthropic.com でAPIキーを発行</li><li>sk-ant- から始まる文字列</li><li>画面を閉じると二度と見られないので必ずコピー保存</li><li>Billing → Usage limits で月額上限を設定（推奨：$5〜$10）</li></ul></div></div><div class="content-block"><div class="block-label">Claude呼び出しの基本コード</div><div class="code-block">
+  <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+  <pre>import anthropic
+import httpx
+
+http_client = httpx.Client(verify=False)
+client = anthropic.Anthropic(
+    api_key="sk-ant-ここに貼る",
+    http_client=http_client
+)
+
+def ask_claude(question):
+    message = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1000,
+        messages=[{"role": "user", "content": question}]
+    )
+    return message.content[0].text
+
+answer = ask_claude("Pythonとは何か3行で説明してください")
+print(answer)</pre>
+</div><div class="output-block">
+  <div class="output-header">実行結果</div>
+  <div class="output-body">PythonはAI・自動化・データ分析に使われる
+読みやすいプログラミング言語です。
+初心者から専門家まで幅広く利用されています。</div>
+</div></div><div class="content-block"><div class="block-label">f文字列</div><div class="block-text">変数をそのまま文章に埋め込める書き方。プロンプト作成で多用します。</div><div class="code-block">
+  <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+  <pre>name = "田中誠"
+age = 47
+print(f"名前：{name}、年齢：{age}歳")</pre>
+</div><div class="output-block">
+  <div class="output-header">実行結果</div>
+  <div class="output-body">名前：田中誠、年齢：47歳</div>
+</div></div>
+  <div class="content-block">
+  <div class="block-label">確認課題</div>
+  <div class="task-box">
+    <div class="task-box-title">✓ この講義の課題</div>
+    <ul class="task-list"><li>APIキーを取得して月額上限を設定する</li><li>claude_test.py でClaudeからの回答が返ってくることを確認する</li></ul>
+  </div>
+</div>
+  <div class="detail-nav">
+    <a class="detail-nav-btn" href="lecture04.html">← 前の講義</a>
+    <a class="detail-nav-btn" href="lecture_site.html">一覧に戻る</a>
+    <a class="detail-nav-btn" href="lecture06.html">次の講義 →</a>
+  </div>
+</main>
+<footer>Python講義サイト — LECTURE 05 / 11</footer>
+<script>
+function copyCode(btn) {
+  navigator.clipboard.writeText(btn.closest('.code-block').querySelector('pre').textContent)
+    .then(()=>{ btn.textContent='コピー済'; setTimeout(()=>btn.textContent='コピー',1500); });
+}
+</script>
+</body>
+</html>

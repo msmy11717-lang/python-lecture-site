@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python講義サイト</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0e14;
+  --bg2: #111520;
+  --bg3: #181d2a;
+  --bg4: #1e2436;
+  --accent: #4fffb0;
+  --accent2: #00c8ff;
+  --text: #e8eaf0;
+  --text2: #8890a8;
+  --text3: #545d78;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(79,255,176,0.2);
+  --glow: 0 0 30px rgba(79,255,176,0.15);
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Noto Sans JP',sans-serif; line-height:1.7;
+  min-height:100vh; overflow-x:hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(79,255,176,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(79,255,176,0.025) 1px,transparent 1px);
+  background-size:40px 40px; pointer-events:none; z-index:0;
+}
+
+/* ナビ */
+nav {
+  position:sticky; top:0; z-index:100;
+  background:rgba(11,14,20,0.92); backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 40px; display:flex; align-items:center; justify-content:space-between; height:60px;
+}
+.nav-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--accent); letter-spacing:0.05em; cursor:pointer; }
+.nav-links { display:flex; gap:8px; }
+.nav-links a { color:var(--text2); text-decoration:none; font-size:0.85rem; padding:6px 14px; border-radius:6px; transition:all 0.2s; cursor:pointer; }
+.nav-links a:hover { color:var(--accent); background:rgba(79,255,176,0.08); }
+.nav-back { display:none; align-items:center; gap:8px; color:var(--text2); font-size:0.85rem; cursor:pointer; padding:6px 14px; border-radius:6px; transition:all 0.2s; }
+.nav-back:hover { color:var(--accent); background:rgba(79,255,176,0.08); }
+
+/* ページ */
+.page { display:none; position:relative; z-index:1; }
+.page.active { display:block; }
+
+/* メイン */
+main { max-width:1100px; margin:0 auto; padding:60px 40px; }
+
+/* ヒーロー */
+.hero { text-align:center; padding:80px 0 60px; }
+.hero-badge { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); background:rgba(79,255,176,0.08); border:1px solid var(--border2); padding:4px 14px; border-radius:20px; margin-bottom:24px; letter-spacing:0.1em; }
+.hero h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(2.5rem,5vw,4rem); line-height:1.1; margin-bottom:20px; background:linear-gradient(135deg,#fff 30%,var(--accent) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.hero p { color:var(--text2); font-size:1.05rem; max-width:520px; margin:0 auto 40px; }
+.hero-stats { display:flex; justify-content:center; gap:40px; }
+.stat { text-align:center; }
+.stat-num { font-family:'Syne',sans-serif; font-weight:700; font-size:1.8rem; color:var(--accent); }
+.stat-label { font-size:0.8rem; color:var(--text3); margin-top:2px; }
+
+/* セクション */
+section { margin-bottom:80px; }
+.section-header { display:flex; align-items:center; gap:12px; margin-bottom:32px; }
+.section-num { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--accent); background:rgba(79,255,176,0.08); border:1px solid var(--border2); padding:3px 10px; border-radius:4px; }
+.section-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1.4rem; }
+
+/* 講義カード */
+.lectures-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+.lecture-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all 0.25s; cursor:pointer; }
+.lecture-card:hover { border-color:var(--border2); box-shadow:var(--glow); transform:translateY(-2px); }
+.lecture-card.completed .card-header { border-left:3px solid var(--accent); }
+.lecture-card.current .card-header { border-left:3px solid var(--accent2); }
+.card-header { padding:20px 24px; display:flex; align-items:flex-start; justify-content:space-between; border-left:3px solid transparent; }
+.card-num { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text3); margin-bottom:6px; }
+.card-title { font-family:'Syne',sans-serif; font-weight:600; font-size:1rem; }
+.card-badge { font-size:0.7rem; padding:3px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; margin-left:12px; margin-top:2px; }
+.badge-done { background:rgba(79,255,176,0.1); color:var(--accent); border:1px solid rgba(79,255,176,0.2); }
+.badge-current { background:rgba(0,200,255,0.1); color:var(--accent2); border:1px solid rgba(0,200,255,0.2); }
+.badge-todo { background:rgba(255,255,255,0.04); color:var(--text3); border:1px solid var(--border); }
+.card-desc { padding:14px 24px 20px; font-size:0.85rem; color:var(--text2); border-top:1px solid var(--border); }
+.card-keywords { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.keyword { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--accent); background:rgba(79,255,176,0.06); border:1px solid rgba(79,255,176,0.15); padding:2px 8px; border-radius:4px; }
+
+/* 詳細ページ */
+.detail-main { max-width:860px; margin:0 auto; padding:48px 40px 80px; }
+.detail-hero { margin-bottom:48px; padding-bottom:40px; border-bottom:1px solid var(--border); }
+.detail-num { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--accent); background:rgba(79,255,176,0.08); border:1px solid var(--border2); padding:4px 12px; border-radius:4px; display:inline-block; margin-bottom:16px; }
+.detail-title { font-family:'Syne',sans-serif; font-weight:800; font-size:clamp(1.8rem,4vw,2.8rem); line-height:1.2; margin-bottom:16px; background:linear-gradient(135deg,#fff 40%,var(--accent) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.detail-desc { color:var(--text2); font-size:1rem; max-width:600px; }
+.content-block { margin-bottom:40px; }
+.block-label { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--accent); letter-spacing:0.1em; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.block-label::after { content:''; flex:1; height:1px; background:var(--border); }
+.block-text { color:var(--text2); font-size:0.92rem; line-height:1.8; margin-bottom:16px; }
+.code-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin:16px 0; }
+.code-header { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.code-lang { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--accent); }
+.copy-btn { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text3); background:none; border:1px solid var(--border); padding:3px 10px; border-radius:4px; cursor:pointer; transition:all 0.2s; }
+.copy-btn:hover { color:var(--accent); border-color:var(--border2); }
+pre { padding:20px 24px; overflow-x:auto; font-family:'JetBrains Mono',monospace; font-size:0.85rem; line-height:1.7; color:var(--text); }
+pre::-webkit-scrollbar { height:4px; }
+pre::-webkit-scrollbar-thumb { background:var(--bg4); border-radius:2px; }
+.point-box { background:rgba(79,255,176,0.04); border:1px solid var(--border2); border-radius:var(--radius); padding:20px 24px; margin:16px 0; }
+.point-list { list-style:none; }
+.point-list li { font-size:0.88rem; color:var(--text2); padding:4px 0 4px 16px; position:relative; }
+.point-list li::before { content:'→'; position:absolute; left:0; color:var(--accent); font-size:0.75rem; top:6px; }
+.task-box { background:rgba(0,200,255,0.04); border:1px solid rgba(0,200,255,0.2); border-radius:var(--radius); padding:24px; }
+.task-box-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; color:var(--accent2); margin-bottom:12px; }
+.task-list { list-style:none; }
+.task-list li { font-size:0.88rem; color:var(--text2); padding:5px 0 5px 20px; position:relative; }
+.task-list li::before { content:'□'; position:absolute; left:0; color:var(--accent2); }
+.output-block { background:#0a0c10; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin:12px 0; }
+.output-header { padding:8px 16px; border-bottom:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text3); }
+.output-body { padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:#50fa7b; line-height:1.8; }
+.detail-nav { display:flex; justify-content:space-between; align-items:center; margin-top:60px; padding-top:32px; border-top:1px solid var(--border); }
+.detail-nav-btn { display:flex; align-items:center; gap:8px; font-family:'Syne',sans-serif; font-weight:600; font-size:0.88rem; color:var(--text2); background:var(--bg2); border:1px solid var(--border); padding:10px 20px; border-radius:8px; cursor:pointer; transition:all 0.2s; }
+.detail-nav-btn:hover { color:var(--accent); border-color:var(--border2); }
+.detail-nav-btn.disabled { opacity:0.3; pointer-events:none; }
+
+/* チャット */
+.chat-container { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.chat-header { padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.chat-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.chat-header-text { font-family:'Syne',sans-serif; font-weight:600; font-size:0.95rem; }
+.chat-subtext { font-size:0.78rem; color:var(--text3); margin-left:auto; }
+.api-key-area { padding:12px 24px; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.02); display:flex; align-items:center; gap:12px; }
+.api-key-label { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--text3); white-space:nowrap; }
+.api-key-input { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:6px 12px; color:var(--text2); font-family:'JetBrains Mono',monospace; font-size:0.78rem; outline:none; transition:border-color 0.2s; }
+.api-key-input:focus { border-color:var(--border2); }
+.chat-messages { height:360px; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth; }
+.chat-messages::-webkit-scrollbar{width:4px} .chat-messages::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+.msg { display:flex; gap:12px; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg-avatar { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0; font-family:'JetBrains Mono',monospace; }
+.msg-user .msg-avatar { background:rgba(0,200,255,0.15); color:var(--accent2); border:1px solid rgba(0,200,255,0.2); }
+.msg-ai .msg-avatar { background:rgba(79,255,176,0.1); color:var(--accent); border:1px solid var(--border2); }
+.msg-content { flex:1; }
+.msg-name { font-size:0.72rem; color:var(--text3); margin-bottom:4px; font-family:'JetBrains Mono',monospace; }
+.msg-text { font-size:0.9rem; color:var(--text); background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px 16px; line-height:1.6; white-space:pre-wrap; }
+.msg-user .msg-text { background:rgba(0,200,255,0.06); border-color:rgba(0,200,255,0.12); }
+.typing-indicator { display:flex; gap:4px; padding:4px 0; }
+.typing-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:typing 1.2s infinite; }
+.typing-dot:nth-child(2){animation-delay:0.2s} .typing-dot:nth-child(3){animation-delay:0.4s}
+@keyframes typing { 0%,100%{opacity:0.2;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} }
+.chat-input-area { padding:16px 24px; border-top:1px solid var(--border); display:flex; gap:12px; align-items:flex-end; }
+textarea.chat-input { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px 16px; color:var(--text); font-family:'Noto Sans JP',sans-serif; font-size:0.9rem; resize:none; outline:none; line-height:1.5; min-height:48px; max-height:120px; transition:border-color 0.2s; }
+textarea.chat-input:focus { border-color:var(--border2); }
+textarea.chat-input::placeholder { color:var(--text3); }
+.send-btn { background:var(--accent); color:#000; border:none; border-radius:8px; padding:12px 20px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.send-btn:hover { background:#6fffbe; transform:translateY(-1px); }
+.send-btn:disabled { background:var(--bg4); color:var(--text3); cursor:not-allowed; transform:none; }
+
+/* QA */
+.qa-search input { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:12px 16px; color:var(--text); font-family:'Noto Sans JP',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; margin-bottom:20px; }
+.qa-search input:focus { border-color:var(--border2); }
+.qa-search input::placeholder { color:var(--text3); }
+.qa-list { display:flex; flex-direction:column; gap:12px; }
+.qa-item { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:border-color 0.2s; animation:fadeIn 0.3s ease; }
+.qa-item:hover { border-color:var(--border2); }
+.qa-q { padding:16px 20px; display:flex; align-items:flex-start; gap:12px; cursor:pointer; }
+.qa-q-badge { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--accent2); background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.15); padding:2px 8px; border-radius:4px; flex-shrink:0; margin-top:2px; }
+.qa-q-text { font-size:0.9rem; color:var(--text); flex:1; }
+.qa-a { display:none; padding:16px 20px; border-top:1px solid var(--border); background:var(--bg3); }
+.qa-a.open { display:block; }
+.qa-a-badge { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--accent); margin-bottom:8px; }
+.qa-a-text { font-size:0.88rem; color:var(--text2); line-height:1.7; white-space:pre-wrap; }
+.qa-meta { font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--text3); margin-top:10px; }
+.qa-empty { text-align:center; padding:48px; color:var(--text3); font-size:0.9rem; }
+.qa-count { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--text3); margin-bottom:16px; }
+
+footer { position:relative; z-index:1; border-top:1px solid var(--border); padding:32px 40px; text-align:center; color:var(--text3); font-size:0.8rem; font-family:'JetBrains Mono',monospace; }
+#lectures,#chat,#qa { scroll-margin-top:80px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="showTop()">PY_LECTURE</div>
+  <div class="nav-links" id="navLinks">
+    <a onclick="showTop();setTimeout(()=>scrollToSection('lectures'),100)">講義一覧</a>
+    <a onclick="showTop();setTimeout(()=>scrollToSection('chat'),100)">AIチャット</a>
+    <a onclick="showTop();setTimeout(()=>scrollToSection('qa'),100)">QAルーム</a>
+  </div>
+  <div class="nav-back" id="navBack" onclick="showTop()">← 一覧に戻る</div>
+</nav>
+
+<!-- トップページ -->
+<div class="page active" id="pageTop">
+<main>
+  <div class="hero">
+    <div class="hero-badge">PYTHON LECTURE SITE</div>
+    <h1>Pythonで<br>自動化を学ぶ</h1>
+    <p>AIを活用した自動化ツール構築を、実践的な課題を通じて体系的に学ぶ講義サイト。</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num" id="statDone">0</div><div class="stat-label">完了した講義</div></div>
+      <div class="stat"><div class="stat-num">22</div><div class="stat-label">総講義数</div></div>
+      <div class="stat"><div class="stat-num" id="statQA">0</div><div class="stat-label">QA蓄積数</div></div>
+    </div>
+  </div>
+
+  <section id="lectures">
+    <div class="section-header"><span class="section-num">01</span><h2 class="section-title">講義一覧</h2></div>
+    <div class="lectures-grid" id="lecturesGrid"></div>
+  </section>
+
+  <section id="chat">
+    <div class="section-header"><span class="section-num">02</span><h2 class="section-title">AIチャット</h2></div>
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-dot"></div>
+        <span class="chat-header-text">Python学習アシスタント</span>
+        <span class="chat-subtext">質問はQAルームに自動保存されます</span>
+      </div>
+      <div class="api-key-area">
+        <span class="api-key-label">API KEY</span>
+        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="sk-ant-...">
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg msg-ai">
+          <div class="msg-avatar">AI</div>
+          <div class="msg-content">
+            <div class="msg-name">アシスタント</div>
+            <div class="msg-text">こんにちは！Python学習について何でも聞いてください。質問はQAルームに自動的に保存されます。</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chatInput" placeholder="Pythonについて質問する..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">送信</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="qa">
+    <div class="section-header"><span class="section-num">03</span><h2 class="section-title">QAルーム</h2></div>
+    <div class="qa-search"><input type="text" id="qaSearch" placeholder="キーワードで検索..." oninput="filterQA()"></div>
+    <div class="qa-count" id="qaCount"></div>
+    <div class="qa-list" id="qaList"><div class="qa-empty">まだQAがありません。AIチャットで質問するとここに蓄積されます。</div></div>
+  </section>
+</main>
+<footer>Python講義サイト — AIチャット搭載 — QA自動蓄積</footer>
+</div>
+
+<!-- 詳細ページ -->
+<div class="page" id="pageDetail">
+  <div class="detail-main" id="detailContent"></div>
+</div>
+
+<script>
+const lectures = [
+  { num:'01', title:'Pythonの全体像', status:'done',
+    desc:'Pythonで何ができるかを7つの領域で整理。自動化・AI連携・データ分析・Webアプリ等の全体像を把握する。',
+    keywords:['全体像','7領域','自動化','AI連携','データ分析'],
+    sections:[
+      { label:'概要', text:'Pythonは「人間が読みやすい言語で、あらゆる自動化・データ処理・AI連携ができるプログラミング言語」です。現在世界で最も使われているプログラミング言語の1つで、特に自動化・AI領域では事実上の標準です。' },
+      { label:'7つの領域', points:['① ファイル・業務の自動化（Excel・フォルダ・メール）','② Web情報の自動収集（スクレイピング）','③ AI・APIの呼び出し ★最重要','④ データ分析・グラフ作成','⑤ Webアプリ・ツールの作成','⑥ タスク・処理の定期実行','⑦ 機械学習・AIモデルの構築'] },
+      { label:'優先度マップ', points:['★★★ AI・API呼び出し → Claudeを動かす直接の手段','★★★ ファイル・業務自動化 → 最初に習得する基礎','★★☆ Webアプリ作成 → ツールのUI実装','★★☆ Web情報収集 → 情報収集自動化','★☆☆ 機械学習 → 当面不要'] }
+    ],
+    task:['この講義サイト自体がPythonの何の領域を使って作られているか考える','7つの領域のうち自分が最も使いたいものを1つ選ぶ']
+  },
+  { num:'02', title:'環境構築', status:'done',
+    desc:'Python本体のインストール・VSCodeの設定・動作確認まで。PATHの設定・拡張機能インストールを実施。',
+    keywords:['Python本体','VSCode','PATH','インストール','hello.py'],
+    sections:[
+      { label:'必要なもの', points:['① Python本体 → エンジン（https://www.python.org）','② VSCode → コードを書く場所（高機能メモ帳）','③ ターミナル → エンジンに点火する場所（VSCode内蔵）'] },
+      { label:'重要：インストール時の注意', text:'Python本体のインストール時に必ず「Add Python to PATH」にチェックを入れてください。これを忘れると後でエラーが出ます。' },
+      { label:'動作確認コード', code:'print("Pythonが動いた")', output:'Pythonが動いた' }
+    ],
+    task:['python --version でバージョンが表示されることを確認','hello.py を作って「Pythonが動いた」と表示されることを確認']
+  },
+  { num:'03', title:'基本文法', status:'done',
+    desc:'変数・リスト・繰り返し・条件分岐の4つを習得。自動化コードの8割はこの4つで書ける。',
+    keywords:['変数','リスト','for文','if文','条件分岐'],
+    sections:[
+      { label:'① 変数', text:'データに名前をつけて保存する箱。付箋メモのようなイメージです。', code:'name = "田中誠"\nage = 47\nprint(name)\nprint(age)', output:'田中誠\n47' },
+      { label:'② リスト', text:'複数のデータをまとめる入れ物。番号は0から始まります。', code:'files = ["report.pdf", "data.xlsx", "photo.jpg"]\nprint(files[0])\nprint(files[1])', output:'report.pdf\ndata.xlsx' },
+      { label:'③ 繰り返し', text:'リストの中身を1つずつ取り出して同じ処理を繰り返す。これが自動化の核心です。', code:'files = ["report.pdf", "data.xlsx", "photo.jpg"]\nfor file in files:\n    print(file + " を処理中...")', output:'report.pdf を処理中...\ndata.xlsx を処理中...\nphoto.jpg を処理中...' },
+      { label:'④ 条件分岐', text:'状況によって処理を自動で切り替える。信号機のようなイメージ。', code:'score = 85\nif score >= 70:\n    print("高評価")\nelif score >= 50:\n    print("中評価")\nelse:\n    print("低評価")', output:'高評価' }
+    ],
+    task:['lesson3.py を作って4つ全部を1つのファイルに書いて実行する','繰り返し+条件分岐を組み合わせてスコア判定を5件処理するコードを書く']
+  },
+  { num:'04', title:'関数とライブラリ', status:'done',
+    desc:'処理をまとめて再利用できる関数の作り方と、pip installでライブラリを追加する方法を学ぶ。',
+    keywords:['def','import','pip install','関数','ライブラリ'],
+    sections:[
+      { label:'① 関数', text:'複数の命令をひとまとめにして名前をつけたもの。洗濯機のスタートボタンのように「ボタン1つで全部動く」イメージです。', code:'def show_result(name, score):\n    if score >= 70:\n        print(name + "：合格")\n    else:\n        print(name + "：不合格")\n\nshow_result("田中誠", 85)\nshow_result("山田健太", 42)', output:'田中誠：合格\n山田健太：不合格' },
+      { label:'② ライブラリ', text:'他の人が作った便利な部品集。pip installでインストールしてimportで使います。', points:['pip install ライブラリ名 → ターミナルで1回だけ実行','import ライブラリ名 → コードの冒頭に毎回書く','openpyxl → Excelの読み書き','anthropic → Claude AIを呼び出す','requests → WebへのアクセスとAPI呼び出し'] }
+    ],
+    task:['show_result関数を作って5名分のスコアを一括判定する','pip install anthropic を実行してインストールを確認する']
+  },
+  { num:'05', title:'Claude API呼び出し', status:'done',
+    desc:'AnthropicのAPIキー取得・anthropicライブラリでClaudeを実際に呼び出す。f文字列・辞書も習得。',
+    keywords:['APIキー','anthropic','f文字列','辞書','ask_claude'],
+    sections:[
+      { label:'APIキーとは', text:'Claudeのシステムに入るための「あなた専用のパスワード」です。console.anthropic.comで取得します。漏れると他人があなたのキーで使い放題になるため絶対に公開しないでください。', points:['console.anthropic.com でAPIキーを発行','sk-ant- から始まる文字列','画面を閉じると二度と見られないので必ずコピー保存','Billing → Usage limits で月額上限を設定（推奨：$5〜$10）'] },
+      { label:'Claude呼び出しの基本コード', code:'import anthropic\nimport httpx\n\nhttp_client = httpx.Client(verify=False)\nclient = anthropic.Anthropic(\n    api_key="sk-ant-ここに貼る",\n    http_client=http_client\n)\n\ndef ask_claude(question):\n    message = client.messages.create(\n        model="claude-haiku-4-5-20251001",\n        max_tokens=1000,\n        messages=[{"role": "user", "content": question}]\n    )\n    return message.content[0].text\n\nanswer = ask_claude("Pythonとは何か3行で説明してください")\nprint(answer)', output:'PythonはAI・自動化・データ分析に使われる\n読みやすいプログラミング言語です。\n初心者から専門家まで幅広く利用されています。' },
+      { label:'f文字列', text:'変数をそのまま文章に埋め込める書き方。プロンプト作成で多用します。', code:'name = "田中誠"\nage = 47\nprint(f"名前：{name}、年齢：{age}歳")', output:'名前：田中誠、年齢：47歳' }
+    ],
+    task:['APIキーを取得して月額上限を設定する','claude_test.py でClaudeからの回答が返ってくることを確認する']
+  },
+  { num:'06', title:'ファイルの読み書き', status:'done',
+    desc:'テキスト・CSVファイルへの書き込み・読み込みを習得。日時取得・utf-8-sig・追記モードも学ぶ。',
+    keywords:['open()','csv','datetime','utf-8-sig','追記モード'],
+    sections:[
+      { label:'ファイルへの書き込み', text:'open()でファイルを開いてwrite()で書き込みます。withを使うと自動でファイルが閉じられます。', code:'with open("log.txt", "w", encoding="utf-8") as f:\n    f.write("Pythonの学習記録\\n")\n\nprint("保存完了")', output:'保存完了' },
+      { label:'CSVの書き込み', code:'import csv\n\nwith open("data.csv", "w", encoding="utf-8-sig", newline="") as f:\n    writer = csv.writer(f)\n    writer.writerow(["名前", "スコア"])\n    writer.writerow(["田中誠", 85])\n\nprint("CSV保存完了")', output:'CSV保存完了' },
+      { label:'モードの種類', points:['"w" → 新規書き込み（上書き）','"a" → 追記（既存の内容の後ろに足す）','"r" → 読み込み','encoding="utf-8-sig" → Excelで文字化けしない形式'] }
+    ],
+    task:['qa_log.csv を作ってClaudeの回答を3件保存する','Excelで開いて文字化けしていないことを確認する']
+  },
+  { num:'07', title:'フォルダの自動整理', status:'done',
+    desc:'os・shutilライブラリでフォルダ操作を自動化。拡張子ごとにファイルを自動仕分けする実例を実装。',
+    keywords:['os','shutil','listdir','makedirs','自動仕分け'],
+    sections:[
+      { label:'主要な操作', points:['os.listdir() → フォルダの中身を一覧取得','os.path.join() → パスを安全に結合','os.path.isfile() → ファイルかどうか判定','os.path.splitext() → 拡張子を取り出す','os.makedirs() → フォルダを作成','shutil.move() → ファイルを移動'] },
+      { label:'拡張子ごとに自動仕分けするコード', code:'import os, shutil\n\ntarget = r"C:\\Users\\msmy1\\Desktop\\test_folder"\nfolder_map = {".pdf":"PDF",".xlsx":"Excel",".png":"画像",".jpg":"画像"}\n\nfor file in os.listdir(target):\n    full = os.path.join(target, file)\n    if not os.path.isfile(full): continue\n    _, ext = os.path.splitext(file)\n    dest_name = folder_map.get(ext.lower(), "その他")\n    dest = os.path.join(target, dest_name)\n    os.makedirs(dest, exist_ok=True)\n    shutil.move(full, os.path.join(dest, file))\n    print(f"{file} → {dest_name}/")\n\nprint("整理完了")', output:'report.pdf → PDF/\ndata.xlsx → Excel/\nphoto.jpg → 画像/\n整理完了' }
+    ],
+    task:['test_folderを作ってファイルを数件入れて実行する','実行後にフォルダが種類ごとに分かれていることを確認する']
+  },
+  { num:'08', title:'定期実行', status:'done',
+    desc:'scheduleライブラリとwhile Trueで定期実行を実装。Windowsタスクスケジューラで自動起動も設定。',
+    keywords:['schedule','while True','タスクスケジューラ','定期実行','自動化'],
+    sections:[
+      { label:'スケジューリングとは', text:'今まではコードを手動実行するだけでしたが、スケジューリングを使うと指定したタイミングで自動実行できます。', points:['schedule.every().day.at("09:00").do(関数) → 毎日9時','schedule.every(10).minutes.do(関数) → 10分おき','while True + time.sleep(1) → 永遠にループ','Ctrl+C → 停止'] },
+      { label:'毎朝Claudeに質問して保存するコード', code:'import schedule, time\n\ndef morning_task():\n    print("朝のタスク開始")\n    # Claudeへの質問・CSV保存の処理をここに書く\n\nschedule.every().day.at("09:00").do(morning_task)\n\nmorning_task()  # 動作確認用\n\nwhile True:\n    schedule.run_pending()\n    time.sleep(1)', output:'朝のタスク開始' }
+    ],
+    task:['pip install schedule を実行','morning_task()を単体で呼び出して動作確認','スケジューラを起動してCtrl+Cで停止できることを確認']
+  },
+  { num:'09', title:'Webスクレイピング', status:'done',
+    desc:'requests・BeautifulSoupでWebから情報を自動収集する概念と構造を習得。SSL環境問題にも対処。',
+    keywords:['requests','BeautifulSoup','RSS','feedparser','スクレイピング'],
+    sections:[
+      { label:'スクレイピングとは', text:'Webサイトから情報を自動で取ってくる技術です。人間がブラウザで手動コピーする作業を自動化します。', points:['requests.get(url) → HTMLを取得','BeautifulSoup → HTMLを解析して必要部分を抽出','find() → 最初の1件','find_all() → 全件をリストで取得','verify=False → SSL検証を無効（環境問題の対処）'] },
+      { label:'基本構造', code:'import requests\nfrom bs4 import BeautifulSoup\n\nurl = "https://example.com"\nheaders = {"User-Agent": "Mozilla/5.0"}\nresponse = requests.get(url, headers=headers, verify=False)\n\nsoup = BeautifulSoup(response.text, "html.parser")\ntitles = soup.find_all("h2")\n\nfor title in titles:\n    print(title.text.strip())' },
+      { label:'SSL問題について', text:'Windowsのネットワークフィルタドライバが原因でSSL通信がブロックされる場合があります。feedparser等の代替手段を使うか、別環境での実行を検討してください。' }
+    ],
+    task:['pip install requests beautifulsoup4 を実行','概念とコード構造を理解する','環境問題がある場合はfeedparserを試す']
+  },
+  { num:'10', title:'データ×AI分析', status:'done',
+    desc:'CSVを読み込んでClaudeに渡して分析させる。プロンプトへのデータ埋め込みと結果保存を実装。',
+    keywords:['CSV読み込み','データ分析','プロンプト設計','f文字列','結果保存'],
+    sections:[
+      { label:'データをAIに渡す仕組み', text:'CSVを読み込んでf文字列でプロンプトに埋め込み、Claudeに分析させます。これが「データ分析AI」の基本構造です。', code:'import csv\n\ndef load_csv_as_text(filename):\n    rows = []\n    with open(filename, "r", encoding="utf-8-sig") as f:\n        reader = csv.reader(f)\n        for row in reader:\n            rows.append(",".join(row))\n    return "\\n".join(rows)\n\ncsv_text = load_csv_as_text("data.csv")\n\nprompt = f"""\n以下のデータを分析してください：\n\n{csv_text}\n\n1. 最も時間がかかっている作業は何か\n2. 改善のための具体的な提案を3つ\n"""\n\nresult = ask_claude(prompt)\nprint(result)' },
+      { label:'第1〜10回の全技術がつながる', points:['変数・リスト → データの管理','繰り返し → 全ファイルを処理','関数 → ask_claudeとして再利用','ライブラリ → anthropic・csv','ファイル操作 → CSVの読み込み・結果の保存','f文字列 → データをプロンプトに埋め込む'] }
+    ],
+    task:['make_csv.pyでdata.csvを生成する','lesson10.pyでClaudeに分析させる','analysis_xxxx.txt が生成されることを確認する']
+  },
+  { num:'11', title:'講義サイトを作る', status:'done',
+    desc:'第1〜10回の全知識を使って講義サイトを構築。AIチャット・QAルーム機能を実装する。',
+    keywords:['HTML','JavaScript','AIチャット','QAルーム','総合実践'],
+    sections:[
+      { label:'HTMLとは', text:'Webページの骨格を作る言語です。PythonはデータやAI処理を担い、HTMLはブラウザ上の見た目・構造を作ります。', points:['HTML → ページの構造（骨格）','CSS → 見た目・デザイン（皮膚）','JavaScript → 動き・インタラクション（筋肉）','3つをまとめると動くWebサイトになる'] },
+      { label:'このサイトの構成', points:['講義一覧 → カードをクリックで詳細ページへ遷移','AIチャット → Claude APIをJavaScriptから呼び出す','QAルーム → localStorageに自動保存・キーワード検索対応','全部1つのHTMLファイルで完結'] },
+      { label:'PythonとJavaScriptの違い', points:['Python → サーバー側・ファイル操作・自動化','JavaScript → ブラウザ側・画面の動き・API呼び出し','今回はブラウザで動くサイトなのでJavaScriptを使用'] }
+    ],
+    task:['lecture_site.html と lecture01〜11.html を同じフォルダに置く','ブラウザで開いてカードクリックで各講義に遷移することを確認','APIキーを入力してAIチャットが動くことを確認']
+  },
+  { num:'12', title:'LLMは何をしているのか', status:'done',
+    desc:'トークン・確率・予測の3つのキーワードでLLMの内部動作を理解する。temperatureパラメータの役割も習得。',
+    keywords:['LLM','トークン','確率','temperature','予測'],
+    sections:[
+      { label:'LLMの正体', text:'LLM（Large Language Model）の正体は「次のトークンを確率的に予測する機械」です。人間のように考えているわけではなく、学習データのパターンから最も自然な続きを生成しています。', points:['LLM = Large Language Model（大規模言語モデル）','膨大なテキストデータから「次の言葉の確率」を学習したもの','Claudeも GPT-4 も、基本構造は同じ「確率予測エンジン」'] },
+      { label:'トークンとは', points:['英語："Hello World" → ["Hello", " World"]（2トークン前後）','日本語："こんにちは" → ["こん", "にち", "は"]（3〜5トークン前後）','APIのコストはinput tokens + output tokensの合計で計算される'] },
+      { label:'temperatureパラメータ', points:['temperature=0 → 決定論的・一貫した回答（事実確認・分類に向く）','temperature=0.5〜0.7 → バランス型（一般的な対話）','temperature=1以上 → ランダム性高い（創作・アイデア出し）'] }
+    ],
+    task:['「LLMは次のトークンを確率で予測する機械」を自分の言葉で3行以内に説明できるようにする','同じ質問をtemperature=0とtemperature=1で送って回答の違いを比較する']
+  },
+  { num:'13', title:'プロンプトは何をしているのか', status:'done',
+    desc:'3層構造（System・User・Assistant）と確率の地図という概念でプロンプトの本質を理解する。Few-shotも実装。',
+    keywords:['System','User','Assistant','Few-shot','確率空間'],
+    sections:[
+      { label:'プロンプトの正体', text:'プロンプトは「LLMへの指示文」ではなく「確率空間上の出発点を決めるもの」です。同じLLMでもプロンプト次第で全く異なる回答が返ります。', points:['プロンプト = LLMが次のトークンを選ぶための「文脈・出発点」','制約なし → 広い確率分布（回答がブレる）','役割定義あり → 特定ドメインに確率が集中（専門家風の回答）'] },
+      { label:'3層構造', points:['system → AIの「人格・役割・行動ルール」を設定する（会話全体に影響）','user → ユーザーの発言・質問・指示','assistant → AIの返答（Few-shotで事前に例を入れられる）'] },
+      { label:'実用的な原則', points:['① 役割を明示する：「あなたは〇〇の専門家です」','② 出力形式を指定する：「箇条書き3つで」「JSON形式で」','③ 例を見せる（Few-shot）：形式の一貫性が上がる'] }
+    ],
+    task:['System・User・Assistantの3層を使ったプロンプトを自分で設計してAPIで送信する','Few-shotで出力形式（JSON・箇条書きなど）を固定するコードを書いて動作確認する']
+  },
+  { num:'14', title:'AIエージェントの構造', status:'done',
+    desc:'ループ・ツール・状態管理の3要素でAIエージェントの仕組みを理解。Claude Codeが内部でやっていることを解剖する。',
+    keywords:['エージェント','ループ','ツール','状態管理','ReAct'],
+    sections:[
+      { label:'エージェントとは', text:'通常のLLM呼び出しは「1回の質問→1回の回答」で終わります。エージェントは「目標を与えると、複数回のLLM呼び出しと外部ツールを自律的に繰り返して目標を達成する仕組み」です。', points:['通常のLLM：質問 → 回答（1往復で終了）','エージェント：目標 → 思考 → 行動 → 観察 → 思考 → …→ 完了（ループ）','Claude Codeはファイル読み込み・コード実行・修正のループを自動で回す'] },
+      { label:'状態管理', text:'エージェントが複数回LLMを呼び出すとき、プログラム側でmessagesリストを保持し毎回すべての履歴を渡すことで「記憶」を実現します。', code:'messages = []\ndef chat(user_input):\n    messages.append({"role": "user", "content": user_input})\n    response = client.messages.create(\n        model="claude-haiku-4-5-20251001",\n        max_tokens=500,\n        messages=messages\n    )\n    ai_reply = response.content[0].text\n    messages.append({"role": "assistant", "content": ai_reply})\n    return ai_reply' }
+    ],
+    task:['messagesリストを使った多ターン会話を実装し、3回のやり取りで文脈が保持されることを確認する','「思考→行動→観察→思考」のループを紙に図で書いて整理する']
+  },
+  { num:'15', title:'RAGとは何か', status:'done',
+    desc:'外部情報をLLMに渡す仕組み「RAG（Retrieval-Augmented Generation）」の概念と実装を学ぶ。社内情報対応AIの作り方。',
+    keywords:['RAG','Retrieval','外部情報','知識ベース','ファイル読み込み'],
+    sections:[
+      { label:'RAGとは', text:'RAGとは「検索（Retrieval）+ LLM生成（Generation）」の組み合わせです。LLMが知らない情報（最新情報・社内ドキュメント）を回答時に検索して渡すことで、正確な回答を可能にします。', points:['LLMを「頭脳」、外部データを「参考書」として使うイメージ','LLMのパラメータは変えない。情報は毎回「渡す」だけ','第10回のCSV分析・第6回のファイル読み込みがRAGの基礎'] },
+      { label:'シンプルなRAG実装', code:'def simple_rag(question, knowledge_file):\n    with open(knowledge_file, "r", encoding="utf-8") as f:\n        knowledge = f.read()\n    prompt = f"""以下の参考情報を元に、質問に答えてください。\n\n【参考情報】\n{knowledge}\n\n【質問】\n{question}"""\n    return ask_claude(prompt)' }
+    ],
+    task:['company_info.txt を作って自社（または架空の会社）情報を書く','simple_rag() を実装してファイルの情報を元に質問に答えることを確認する']
+  },
+  { num:'16', title:'AIの限界と信頼性', status:'done',
+    desc:'幻覚（ハルシネーション）の仕組みと対処法を学ぶ。AIを正しく信頼する方法と向いている用途・向いていない用途を整理する。',
+    keywords:['ハルシネーション','幻覚','限界','信頼性','対処法'],
+    sections:[
+      { label:'ハルシネーションとは', text:'ハルシネーション（幻覚）とは「AIがもっともらしい嘘をつく現象」です。確信を持って、流暢な文章で、事実ではないことを述べます。確率予測機械の宿命であり、完全には避けられません。', points:['存在しない論文・URL・人物を「実在するもの」として引用する','複雑な数値計算を間違える','「知らない」と言わず、それらしい回答をでっち上げる'] },
+      { label:'向いている用途・向いていない用途', points:['◎ 向いている：文章整理・翻訳・コードひな型・アイデア出し・要約','◎ 向いている：渡したデータの分析・パターン抽出','△ 注意：専門知識（法律・医療・財務） → 専門家に最終確認','✕ 向いていない：事実の最終確認・リアルタイム情報・精密な数値計算'] }
+    ],
+    task:['存在しない会社・人物についてClaudeに質問してハルシネーションが起きるか観察する','同じ質問をRAGで正しい情報を渡した場合と比較して回答品質の差を確認する']
+  },
+  { num:'17', title:'Claude Codeとは何か', status:'done',
+    desc:'第12〜16回の統合。LLM・プロンプト・エージェント・RAG・限界認識がClaude Codeの中でどう動いているかを解剖する。',
+    keywords:['Claude Code','エージェント統合','全体像','実践','ツール設計'],
+    sections:[
+      { label:'Claude Codeの正体', text:'Claude Codeは「AIエージェントとして動くコーディングアシスタント」です。第12〜16回で学んだすべての概念がここに集約されています。', points:['LLM（第12回）：次のコード・指示を確率的に生成する','プロンプト（第13回）：ファイル内容・エラーをSystemに渡して文脈を作る','エージェント（第14回）：思考→ツール呼び出し→観察のループを自律で回す','RAG（第15回）：ファイルやコードを「読んで渡す」ことで文脈を補完する','限界認識（第16回）：Claude Codeも間違える。出力を必ず確認する'] },
+      { label:'効果的な使い方', points:['明確な目標を伝える：なぜ修正するかも伝える','コンテキストを提供する：エラーメッセージ・関連ファイル・制約条件を共有','出力を必ず確認する：エージェントが自信満々に誤った修正をする場合がある','CLAUDE.mdを活用する：プロジェクトのルール・構造を記述して毎回読ませる'] }
+    ],
+    task:['Claude Codeに「lecture17.htmlを読んで内容を3行で要約して」と指示してエージェントの動きを観察する','第1〜17回を振り返り、自分の仕事で使えそうなツールを1つ設計してClaude Codeに実装を手伝ってもらう']
+  },
+  { num:'18', title:'Gitとは何か', status:'done',
+    desc:'バージョン管理の概念を理解する。Gitの3つの場所・コミット＝セーブポイントという考え方を習得する。',
+    keywords:['Git','バージョン管理','ワーキングディレクトリ','ステージング','コミット'],
+    sections:[
+      { label:'Gitが解決する問題', text:'「report_最終版.docx」「report_最終版2.docx」のような手動管理の混乱を解決するのがGitです。いつ・何を・なぜ変えたかを記録し、過去の任意の状態に戻れるようにします。', points:['いつ・何を・なぜ変えたかを記録できる','過去の任意の状態に戻れる（Ctrl+Zの無限版）','複数人が同じファイルを編集しても競合を管理できる'] },
+      { label:'Gitの3つの場所', points:['ワーキングディレクトリ：実際に編集しているフォルダ（普通のファイル）','ステージングエリア：「次にコミットするもの」を選ぶ一時エリア（git add で移動）','リポジトリ（.git）：全コミット履歴が保存される場所（git commit で確定）'] },
+      { label:'コミットとは', text:'ゲームのセーブポイントと同じイメージです。コミットを打つとその時点の全ファイル状態がリポジトリに永久保存されます。', points:['コミット = セーブポイント（スナップショット）','各コミットにはコミットメッセージ（変更理由）を書く','コミットID（ハッシュ）という一意の番号で管理される'] }
+    ],
+    task:['Gitの3つの場所を紙に書いて図にする','「コミット＝セーブポイント」のたとえを自分の言葉で説明できるようにする','git --version でGitがインストールされていることを確認する']
+  },
+  { num:'19', title:'Gitの基本操作', status:'done',
+    desc:'git init・git add・git commit・git log の4コマンドを実際に動かす。コミットIDの概念も習得する。',
+    keywords:['git init','git add','git commit','git log','コミットID'],
+    sections:[
+      { label:'4つの基本コマンド', points:['git init → フォルダをGit管理下に置く（最初の1回だけ）','git add ファイル名 → ステージングエリアにファイルを追加する','git commit -m "メッセージ" → ステージングの内容をリポジトリに保存する','git log → コミット履歴（セーブポイント一覧）を確認する'] },
+      { label:'基本操作フロー', code:'# フォルダをGit管理下に置く\ngit init\n\n# ステージングエリアに追加\ngit add note.txt\n# または全ファイル\ngit add .\n\n# コミット（セーブポイントを打つ）\ngit commit -m "最初のメモを追加"\n\n# 履歴確認（1行ずつ）\ngit log --oneline' },
+      { label:'コミットIDの概念', points:['各コミットには40文字のハッシュ（SHA-1）が自動生成される','最初の7文字だけでも識別できる（git log --oneline で短縮表示）','このIDを使って「特定の時点に戻る」操作が可能（git checkout ハッシュ）'] }
+    ],
+    task:['任意のフォルダで git init を実行し、.git フォルダが生成されることを確認する','テキストファイルを作成して git add → git commit の流れを実際に行う','git log --oneline でコミットIDの先頭7文字が表示されることを確認する']
+  },
+  { num:'20', title:'ブランチとは何か', status:'done',
+    desc:'作業の分岐点「ブランチ」の概念を理解する。main・feature の関係と git branch・checkout -b・merge を習得する。',
+    keywords:['ブランチ','branch','checkout -b','merge','マージ'],
+    sections:[
+      { label:'ブランチ＝作業の分岐点', text:'本線（main）から分岐した「試作線」を作ることで、本番に影響を与えずに新機能を試せます。', points:['main / master ブランチ：本番コード（常に正常に動く状態を維持する）','feature ブランチ：新機能・試作品を作る専用の作業線','マージ（merge）で feature の変更を main に取り込む'] },
+      { label:'ブランチの基本操作', code:'# 新しいブランチを作って移動（-b で作成+移動）\ngit checkout -b feature/new-function\n\n# 現在のブランチを確認（* が現在地）\ngit branch\n\n# main ブランチに戻ってマージ\ngit checkout main\ngit merge feature/new-function\n\n# マージ済みのブランチを削除\ngit branch -d feature/new-function' },
+      { label:'マージの概念', points:['Fast-forward マージ：mainに変更がない場合、そのまま先に進める','コンフリクト（競合）：2つのブランチで同じ行を変更した場合に発生 → 手動で解決','ブランチ名の慣習：feature/〇〇・bugfix/〇〇・hotfix/〇〇'] }
+    ],
+    task:['git checkout -b feature/test で新しいブランチを作成し、git branch で確認する','feature ブランチでファイルを追加してコミットする','main ブランチに戻り、git merge feature/test でマージする']
+  },
+  { num:'21', title:'GitHubとは何か', status:'done',
+    desc:'GitのリポジトリをクラウドにホストするGitHubを理解する。ローカルとリモートの関係と push・pull を習得する。',
+    keywords:['GitHub','remote add','push','pull','クラウド'],
+    sections:[
+      { label:'GitHubはGitのリポジトリをクラウドに置く場所', text:'GitはPC上だけで動くツール。GitHubはそのリポジトリをインターネット上に置いてバックアップ・共有・公開を可能にするサービスです。', points:['Git = バージョン管理の仕組み（ローカルで完結）','GitHub = Gitリポジトリを置くクラウドサービス（Microsoft傘下）','GitとGitHubは別物。GitなしでGitHubは使えない'] },
+      { label:'ローカルとリモートの連携コマンド', code:'# リモートを登録（最初の1回）\ngit remote add origin https://github.com/ユーザー名/リポジトリ名.git\n\n# ローカルの変更をGitHubに送る（プッシュ）\ngit push origin main\n\n# GitHubの変更をローカルに取得する（プル）\ngit pull origin main\n\n# GitHubからリポジトリごとコピーする（クローン）\ngit clone https://github.com/ユーザー名/リポジトリ名.git' },
+      { label:'3つの用途', points:['① バックアップ：PCが壊れてもGitHubにpushしてあれば全履歴ごと復元できる','② 共有：チームメンバーが同じリポジトリをcloneして共同開発できる','③ 公開：リポジトリをPublicにすれば世界中に公開できる（ポートフォリオ）'] }
+    ],
+    task:['github.com でアカウントを作成する（まだない場合）','GitHubで新しいリポジトリを作成する','git remote add origin でローカルとリモートを接続してpushする']
+  },
+  { num:'22', title:'Claude CodeとGitの連携', status:'current',
+    desc:'第18〜21回の統合。Claude CodeがGitを自動操作する仕組みと、日本語指示でadd・commit・pushまで任せる実践を学ぶ。',
+    keywords:['Claude Code','Git自動操作','git log --oneline','日本語指示','全操作まとめ'],
+    sections:[
+      { label:'Claude CodeはGitを自動操作できる', text:'Claude CodeはAIエージェントとして動くため、Gitコマンドもツールとして自律的に実行できます。', points:['git add・git commit・git push をClaude Codeが代わりに実行する','コミットメッセージも文脈から自動生成する（日本語での指定も可）','ブランチの作成・切り替え・マージも指示できる','危険な操作（force push等）は事前に確認を求める（安全設計）'] },
+      { label:'日本語指示の例', code:'# 例①：コミットだけ\n"今の変更をコミットして。メッセージは「lecture22.htmlを追加」で"\n\n# 例②：GitHubまで一気に\n"今の変更をコミットしてGitHubにpushして"\n\n# 例③：履歴確認\n"最近のコミット履歴を見せて"\n→ git log --oneline を自動実行' },
+      { label:'第18〜22回の全操作まとめ', points:['第18回：Gitの概念（3つの場所・コミット＝セーブポイント）','第19回：基本操作（init・add・commit・log）','第20回：ブランチ（branch・checkout -b・merge）','第21回：GitHub（remote add・push・pull）','第22回：Claude Code連携（日本語指示でGit操作を自動化）'] }
+    ],
+    task:['Claude Codeに「今の変更をコミットしてGitHubにpushして」と日本語で指示して実行させる','git log --oneline でコミット履歴が積み上がっていることを確認する','GitHubのリポジトリページでpushしたファイルが表示されていることを確認する']
+  }
+];
+
+// ページ切り替え
+function showTop() {
+  document.getElementById('pageTop').classList.add('active');
+  document.getElementById('pageDetail').classList.remove('active');
+  document.getElementById('navLinks').style.display = 'flex';
+  document.getElementById('navBack').style.display = 'none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showDetail(idx) {
+  document.getElementById('pageTop').classList.remove('active');
+  document.getElementById('pageDetail').classList.add('active');
+  document.getElementById('navLinks').style.display = 'none';
+  document.getElementById('navBack').style.display = 'flex';
+  renderDetail(idx);
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+// 詳細ページ描画
+function renderDetail(idx) {
+  const l = lectures[idx];
+  const sectionsHtml = l.sections.map(s => {
+    let h = `<div class="content-block"><div class="block-label">${s.label}</div>`;
+    if (s.text) h += `<div class="block-text">${s.text}</div>`;
+    if (s.points) h += `<div class="point-box"><ul class="point-list">${s.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>`;
+    if (s.code) h += `<div class="code-block"><div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div><pre>${esc(s.code)}</pre></div>`;
+    if (s.output) h += `<div class="output-block"><div class="output-header">実行結果</div><div class="output-body">${esc(s.output)}</div></div>`;
+    return h + '</div>';
+  }).join('');
+
+  const taskHtml = l.task ? `<div class="content-block"><div class="block-label">確認課題</div><div class="task-box"><div class="task-box-title">✓ この講義の課題</div><ul class="task-list">${l.task.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div></div>` : '';
+
+  const prev = idx > 0 ? `<div class="detail-nav-btn" onclick="showDetail(${idx-1})">← 前の講義</div>` : `<div class="detail-nav-btn disabled">← 前の講義</div>`;
+  const next = idx < lectures.length-1 ? `<div class="detail-nav-btn" onclick="showDetail(${idx+1})">次の講義 →</div>` : `<div class="detail-nav-btn disabled">次の講義 →</div>`;
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-hero">
+      <div class="detail-num">LECTURE ${l.num}</div>
+      <h1 class="detail-title">${l.title}</h1>
+      <p class="detail-desc">${l.desc}</p>
+    </div>
+    ${sectionsHtml}${taskHtml}
+    <div class="detail-nav">${prev}<div class="detail-nav-btn" onclick="showTop()">一覧に戻る</div>${next}</div>`;
+}
+
+// 講義一覧描画
+function renderLectures() {
+  document.getElementById('lecturesGrid').innerHTML = lectures.map((l,i) => `
+    <div class="lecture-card ${l.status==='done'?'completed':l.status==='current'?'current':''}" onclick="showDetail(${i})">
+      <div class="card-header">
+        <div><div class="card-num">LECTURE ${l.num}</div><div class="card-title">${l.title}</div></div>
+        <span class="card-badge badge-${l.status==='done'?'done':l.status==='current'?'current':'todo'}">${l.status==='done'?'完了':l.status==='current'?'進行中':'TODO'}</span>
+      </div>
+      <div class="card-desc">${l.desc}<div class="card-keywords">${l.keywords.map(k=>`<span class="keyword">${k}</span>`).join('')}</div></div>
+    </div>`).join('');
+  document.getElementById('statDone').textContent = lectures.filter(l=>l.status==='done').length;
+}
+
+// コピー
+function copyCode(btn) {
+  navigator.clipboard.writeText(btn.closest('.code-block').querySelector('pre').textContent)
+    .then(()=>{ btn.textContent='コピー済'; setTimeout(()=>btn.textContent='コピー',1500); });
+}
+
+// QA
+let qaData = JSON.parse(localStorage.getItem('py_qa')||'[]');
+function saveQA(q,a) {
+  qaData.unshift({id:Date.now(),question:q,answer:a,time:new Date().toLocaleString('ja-JP')});
+  localStorage.setItem('py_qa',JSON.stringify(qaData));
+  renderQA(); document.getElementById('statQA').textContent=qaData.length;
+}
+function renderQA(f='') {
+  const list=document.getElementById('qaList');
+  const d=f?qaData.filter(q=>q.question.includes(f)||q.answer.includes(f)):qaData;
+  document.getElementById('qaCount').textContent=d.length?`${d.length} 件`:'';
+  if(!d.length){list.innerHTML=`<div class="qa-empty">${f?'該当するQAが見つかりません。':'まだQAがありません。AIチャットで質問するとここに蓄積されます。'}</div>`;return;}
+  list.innerHTML=d.map(item=>`
+    <div class="qa-item">
+      <div class="qa-q" onclick="this.nextElementSibling.classList.toggle('open')">
+        <span class="qa-q-badge">Q</span><span class="qa-q-text">${esc(item.question)}</span><span style="color:var(--text3);font-size:0.8rem;flex-shrink:0;margin-top:2px">▼</span>
+      </div>
+      <div class="qa-a">
+        <div class="qa-a-badge">A — Claude</div>
+        <div class="qa-a-text">${esc(item.answer)}</div>
+        <div class="qa-meta">${item.time}</div>
+      </div>
+    </div>`).join('');
+}
+function filterQA(){renderQA(document.getElementById('qaSearch').value);}
+
+// チャット
+async function sendMessage() {
+  const input=document.getElementById('chatInput');
+  const apiKey=document.getElementById('apiKeyInput').value.trim();
+  const question=input.value.trim();
+  if(!question)return;
+  if(!apiKey){alert('APIキーを入力してください。');return;}
+  input.value='';input.style.height='auto';
+  document.getElementById('sendBtn').disabled=true;
+  appendMsg('user',question);
+  const tid=appendTyping();
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-calls':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1024,system:'あなたはPython学習を支援するアシスタントです。プログラミング初心者にわかりやすく日本語で回答してください。',messages:[{role:'user',content:question}]})
+    });
+    const data=await res.json();
+    removeTyping(tid);
+    const answer=data.content?.[0]?.text||'エラーが発生しました。APIキーを確認してください。';
+    appendMsg('ai',answer);
+    saveQA(question,answer);
+  } catch(e){removeTyping(tid);appendMsg('ai','エラー: '+e.message);}
+  document.getElementById('sendBtn').disabled=false;
+}
+function appendMsg(role,text){
+  const m=document.getElementById('chatMessages');
+  const d=document.createElement('div');
+  d.className=`msg msg-${role}`;
+  d.innerHTML=`<div class="msg-avatar">${role==='user'?'ME':'AI'}</div><div class="msg-content"><div class="msg-name">${role==='user'?'あなた':'アシスタント'}</div><div class="msg-text">${esc(text)}</div></div>`;
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function appendTyping(){
+  const id='t'+Date.now();const m=document.getElementById('chatMessages');
+  const d=document.createElement('div');d.className='msg msg-ai';d.id=id;
+  d.innerHTML=`<div class="msg-avatar">AI</div><div class="msg-content"><div class="msg-name">アシスタント</div><div class="msg-text"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
+  m.appendChild(d);m.scrollTop=m.scrollHeight;return id;
+}
+function removeTyping(id){const e=document.getElementById(id);if(e)e.remove();}
+function scrollToSection(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderLectures();renderQA();
+  document.getElementById('statQA').textContent=qaData.length;
+  const input=document.getElementById('chatInput');
+  input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';});
+});
+</script>
+</body>
+</html>

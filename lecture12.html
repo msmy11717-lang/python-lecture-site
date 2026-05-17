@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第12回 LLMは何をしているのか | Python講義サイト</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0e14; --bg2:#111520; --bg3:#181d2a; --bg4:#1e2436;
+  --accent:#4fffb0; --accent2:#00c8ff;
+  --text:#e8eaf0; --text2:#8890a8; --text3:#545d78;
+  --border:rgba(255,255,255,0.06); --border2:rgba(79,255,176,0.2);
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(79,255,176,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,255,176,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+nav{position:sticky;top:0;z-index:100;background:rgba(11,14,20,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);letter-spacing:0.05em;text-decoration:none;}
+.nav-back{color:var(--text2);font-size:0.85rem;padding:6px 14px;border-radius:6px;transition:all 0.2s;text-decoration:none;}
+.nav-back:hover{color:var(--accent);background:rgba(79,255,176,0.08);}
+main{max-width:860px;margin:0 auto;padding:48px 40px 80px;position:relative;z-index:1;}
+.detail-hero{margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
+.detail-num{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent);background:rgba(79,255,176,0.08);border:1px solid var(--border2);padding:4px 12px;border-radius:4px;display:inline-block;margin-bottom:16px;}
+.detail-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,#fff 40%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.detail-desc{color:var(--text2);font-size:1rem;max-width:600px;}
+.content-block{margin-bottom:40px;}
+.block-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.block-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.block-text{color:var(--text2);font-size:0.92rem;line-height:1.8;margin-bottom:16px;}
+.code-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:16px 0;}
+.code-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--accent);}
+.copy-btn{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);background:none;border:1px solid var(--border);padding:3px 10px;border-radius:4px;cursor:pointer;transition:all 0.2s;}
+.copy-btn:hover{color:var(--accent);border-color:var(--border2);}
+pre{padding:20px 24px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:0.85rem;line-height:1.7;color:var(--text);}
+pre::-webkit-scrollbar{height:4px;}
+pre::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+.point-box{background:rgba(79,255,176,0.04);border:1px solid var(--border2);border-radius:var(--radius);padding:20px 24px;margin:16px 0;}
+.point-list{list-style:none;}
+.point-list li{font-size:0.88rem;color:var(--text2);padding:4px 0 4px 16px;position:relative;}
+.point-list li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:0.75rem;top:6px;}
+.task-box{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.2);border-radius:var(--radius);padding:24px;}
+.task-box-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:var(--accent2);margin-bottom:12px;}
+.task-list{list-style:none;}
+.task-list li{font-size:0.88rem;color:var(--text2);padding:5px 0 5px 20px;position:relative;}
+.task-list li::before{content:'□';position:absolute;left:0;color:var(--accent2);}
+.output-block{background:#0a0c10;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:12px 0;}
+.output-header{padding:8px 16px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);}
+.output-body{padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:#50fa7b;line-height:1.8;}
+.detail-nav{display:flex;justify-content:space-between;align-items:center;margin-top:60px;padding-top:32px;border-top:1px solid var(--border);}
+.detail-nav-btn{font-family:'Syne',sans-serif;font-weight:600;font-size:0.88rem;color:var(--text2);background:var(--bg2);border:1px solid var(--border);padding:10px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;}
+.detail-nav-btn:hover{color:var(--accent);border-color:var(--border2);}
+.detail-nav-btn.disabled{opacity:0.3;pointer-events:none;}
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:32px 40px;text-align:center;color:var(--text3);font-size:0.8rem;font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="lecture_site.html">PY_LECTURE</a>
+  <a class="nav-back" href="lecture_site.html">← 一覧に戻る</a>
+</nav>
+<main>
+  <div class="detail-hero">
+    <div class="detail-num">LECTURE 12</div>
+    <h1 class="detail-title">LLMは何をしているのか</h1>
+    <p class="detail-desc">トークン・確率・予測の3つのキーワードでLLMの内部動作を理解する。「AIが考えている」という誤解を解く。</p>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">LLMの正体</div>
+    <div class="block-text">LLM（Large Language Model）とは「大規模言語モデル」の略です。Claudeも ChatGPT も、すべてLLMです。その正体は「次のトークンを予測する確率機械」です。人間のように「考えて」答えているわけではありません。</div>
+    <div class="point-box"><ul class="point-list">
+      <li>LLM = Large Language Model（大規模言語モデル）</li>
+      <li>膨大なテキストデータを学習して「次の言葉の確率」を覚えたもの</li>
+      <li>Claudeも GPT-4 も、基本構造は同じ「確率予測エンジン」</li>
+      <li>「理解して答えている」のではなく「確率的に最適な続きを生成している」</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">トークンとは何か</div>
+    <div class="block-text">LLMはテキストを「トークン」という単位で処理します。トークンは単語や文字の断片で、日本語は英語より多くのトークンを消費します。APIのコストはトークン数で計算されます。</div>
+    <div class="point-box"><ul class="point-list">
+      <li>英語：「Hello World」→ ["Hello", " World"]（2トークン前後）</li>
+      <li>日本語：「こんにちは」→ ["こん", "にち", "は"]（3〜5トークン前後）</li>
+      <li>1トークン ≈ 英語0.75単語 ≈ 日本語0.5文字（目安）</li>
+      <li>max_tokens でAPIの最大出力トークン数を制限できる</li>
+      <li>課金はinput tokens + output tokensの合計で計算される</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">確率による予測の仕組み</div>
+    <div class="block-text">LLMは「これまでの文脈から次に来る可能性が高いトークンを選ぶ」ことを繰り返します。「今日の天気は」という入力に対して、確率分布から次のトークンを選びます。</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">概念コード（疑似コード）</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre># LLMの内部動作イメージ（実際のコードではありません）
+
+入力 = "今日の天気は"
+
+次のトークンの確率分布:
+  "晴れ"    → 38%
+  "くもり"  → 27%
+  "雨"      → 19%
+  "雪"      → 8%
+  "不明"    → 8%
+
+→ 確率に従って"晴れ"を選択
+
+次の入力 = "今日の天気は晴れ"
+→ また次のトークンを予測...これを繰り返す</pre>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">temperatureパラメータ</div>
+    <div class="block-text">temperatureは確率分布の「ランダム性」を制御するパラメータです。0に近いほど確定的・一貫した回答になり、1以上では創造的・多様な回答になります。用途に応じて使い分けます。</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre>import anthropic
+
+client = anthropic.Anthropic(api_key="sk-ant-ここに貼る")
+
+# temperature=0：決定論的・一貫した回答（事実確認・分類に向く）
+response_stable = client.messages.create(
+    model="claude-haiku-4-5-20251001",
+    max_tokens=200,
+    temperature=0,
+    messages=[{"role": "user", "content": "Pythonとは何か1行で"}]
+)
+
+# temperature=1：創造的・多様な回答（ブレスト・文章生成に向く）
+response_creative = client.messages.create(
+    model="claude-haiku-4-5-20251001",
+    max_tokens=200,
+    temperature=1,
+    messages=[{"role": "user", "content": "Pythonとは何か1行で"}]
+)
+
+print("安定版:", response_stable.content[0].text)
+print("創造版:", response_creative.content[0].text)</pre>
+    </div>
+    <div class="point-box"><ul class="point-list">
+      <li>temperature=0 → 毎回ほぼ同じ回答（分類・要約・コード生成）</li>
+      <li>temperature=0.5〜0.7 → バランス型（一般的な対話）</li>
+      <li>temperature=1以上 → ランダム性高い（創作・アイデア出し）</li>
+      <li>デフォルト値はモデルによって異なる（Claudeは概ね1.0）</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">誰も「考えて」いない</div>
+    <div class="block-text">LLMは意味を「理解」して答えているのではありません。学習データのパターンを元に、文脈に合う確率が高いトークン列を生成しているだけです。これがハルシネーション（第16回）の根本原因であり、プロンプト設計（第13回）が重要な理由でもあります。</div>
+    <div class="point-box"><ul class="point-list">
+      <li>LLMに「意図」も「理解」も「常識」もない</li>
+      <li>あるのは「学習データから抽出した統計的パターン」だけ</li>
+      <li>それでも非常に優秀なのは、学習データが膨大だから</li>
+      <li>限界を知ることが、AIを正しく使う第一歩</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">確認課題</div>
+    <div class="task-box">
+      <div class="task-box-title">✓ この講義の課題</div>
+      <ul class="task-list">
+        <li>「LLMは次のトークンを確率で予測する機械である」を自分の言葉で3行以内に説明できるようにする</li>
+        <li>同じ質問をtemperature=0とtemperature=1で送って回答の違いを比較する</li>
+        <li>APIのレスポンスからinput_tokensとoutput_tokensを取り出して表示するコードを書く</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="detail-nav">
+    <a class="detail-nav-btn" href="lecture11.html">← 前の講義</a>
+    <a class="detail-nav-btn" href="lecture_site.html">一覧に戻る</a>
+    <a class="detail-nav-btn" href="lecture13.html">次の講義 →</a>
+  </div>
+</main>
+<footer>Python講義サイト — LECTURE 12 / 17</footer>
+<script>
+function copyCode(btn) {
+  navigator.clipboard.writeText(btn.closest('.code-block').querySelector('pre').textContent)
+    .then(()=>{ btn.textContent='コピー済'; setTimeout(()=>btn.textContent='コピー',1500); });
+}
+</script>
+</body>
+</html>

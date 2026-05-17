@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第15回 RAGとは何か | Python講義サイト</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0e14; --bg2:#111520; --bg3:#181d2a; --bg4:#1e2436;
+  --accent:#4fffb0; --accent2:#00c8ff;
+  --text:#e8eaf0; --text2:#8890a8; --text3:#545d78;
+  --border:rgba(255,255,255,0.06); --border2:rgba(79,255,176,0.2);
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;line-height:1.7;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(79,255,176,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,255,176,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+nav{position:sticky;top:0;z-index:100;background:rgba(11,14,20,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--accent);letter-spacing:0.05em;text-decoration:none;}
+.nav-back{color:var(--text2);font-size:0.85rem;padding:6px 14px;border-radius:6px;transition:all 0.2s;text-decoration:none;}
+.nav-back:hover{color:var(--accent);background:rgba(79,255,176,0.08);}
+main{max-width:860px;margin:0 auto;padding:48px 40px 80px;position:relative;z-index:1;}
+.detail-hero{margin-bottom:48px;padding-bottom:40px;border-bottom:1px solid var(--border);}
+.detail-num{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent);background:rgba(79,255,176,0.08);border:1px solid var(--border2);padding:4px 12px;border-radius:4px;display:inline-block;margin-bottom:16px;}
+.detail-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.2;margin-bottom:16px;background:linear-gradient(135deg,#fff 40%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.detail-desc{color:var(--text2);font-size:1rem;max-width:600px;}
+.content-block{margin-bottom:40px;}
+.block-label{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.block-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.block-text{color:var(--text2);font-size:0.92rem;line-height:1.8;margin-bottom:16px;}
+.code-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:16px 0;}
+.code-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--accent);}
+.copy-btn{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);background:none;border:1px solid var(--border);padding:3px 10px;border-radius:4px;cursor:pointer;transition:all 0.2s;}
+.copy-btn:hover{color:var(--accent);border-color:var(--border2);}
+pre{padding:20px 24px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:0.85rem;line-height:1.7;color:var(--text);}
+pre::-webkit-scrollbar{height:4px;}
+pre::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+.point-box{background:rgba(79,255,176,0.04);border:1px solid var(--border2);border-radius:var(--radius);padding:20px 24px;margin:16px 0;}
+.point-list{list-style:none;}
+.point-list li{font-size:0.88rem;color:var(--text2);padding:4px 0 4px 16px;position:relative;}
+.point-list li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:0.75rem;top:6px;}
+.task-box{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.2);border-radius:var(--radius);padding:24px;}
+.task-box-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:var(--accent2);margin-bottom:12px;}
+.task-list{list-style:none;}
+.task-list li{font-size:0.88rem;color:var(--text2);padding:5px 0 5px 20px;position:relative;}
+.task-list li::before{content:'□';position:absolute;left:0;color:var(--accent2);}
+.output-block{background:#0a0c10;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:12px 0;}
+.output-header{padding:8px 16px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);}
+.output-body{padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:#50fa7b;line-height:1.8;}
+.detail-nav{display:flex;justify-content:space-between;align-items:center;margin-top:60px;padding-top:32px;border-top:1px solid var(--border);}
+.detail-nav-btn{font-family:'Syne',sans-serif;font-weight:600;font-size:0.88rem;color:var(--text2);background:var(--bg2);border:1px solid var(--border);padding:10px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;}
+.detail-nav-btn:hover{color:var(--accent);border-color:var(--border2);}
+.detail-nav-btn.disabled{opacity:0.3;pointer-events:none;}
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:32px 40px;text-align:center;color:var(--text3);font-size:0.8rem;font-family:'JetBrains Mono',monospace;}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="lecture_site.html">PY_LECTURE</a>
+  <a class="nav-back" href="lecture_site.html">← 一覧に戻る</a>
+</nav>
+<main>
+  <div class="detail-hero">
+    <div class="detail-num">LECTURE 15</div>
+    <h1 class="detail-title">RAGとは何か</h1>
+    <p class="detail-desc">外部情報をLLMに渡す仕組み「RAG（Retrieval-Augmented Generation）」の概念と実装を学ぶ。社内情報・最新情報を扱えるAIの作り方。</p>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">RAGとは何か</div>
+    <div class="block-text">RAGとは「Retrieval-Augmented Generation（検索拡張生成）」の略です。LLMが知らない情報（最新情報・社内ドキュメント・個人データなど）を、回答時に検索して渡すことで、正確な回答を可能にする仕組みです。第10回で「CSVをプロンプトに埋め込んでClaudeに分析させた」のも、シンプルなRAGです。</div>
+    <div class="point-box"><ul class="point-list">
+      <li>RAG = 検索（Retrieval）+ LLM生成（Generation）の組み合わせ</li>
+      <li>LLMを「頭脳」、外部データを「参考書」として使うイメージ</li>
+      <li>LLMのパラメータ（重み）は変えない。情報は毎回「渡す」だけ</li>
+      <li>第10回のCSV分析・第6回のファイル読み込みがまさにRAGの基礎</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">なぜRAGが必要か</div>
+    <div class="block-text">LLMは学習データが収集された時点の情報しか持っていません。また、あなたの会社の内部情報や個人ファイルはインターネット上に存在しないため、LLMは知ることができません。RAGはこの問題を解決します。</div>
+    <div class="point-box"><ul class="point-list">
+      <li>LLMの知識カットオフ以降の情報は知らない（例：昨日のニュース）</li>
+      <li>社内マニュアル・契約書・会議メモは学習データに含まれない</li>
+      <li>個人の予定・タスク・顧客情報も同様に知らない</li>
+      <li>RAGで「必要な情報をその都度渡す」ことでこれを解決する</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">RAGの基本フロー</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">フロー図（概念）</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre>ユーザーの質問
+    ↓
+① 質問に関連する情報を検索・取得
+   （ファイル読み込み / DB検索 / Web検索）
+    ↓
+② 取得した情報 ＋ 質問 をLLMに渡す
+    ↓
+③ LLMが情報を元に回答を生成
+    ↓
+回答</pre>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">最も単純なRAG実装</div>
+    <div class="block-text">RAGの本質は「ファイルを読んでプロンプトに入れる」だけです。高度なベクトル検索は必要ありません。まずはシンプルな実装から始めます。</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre">import anthropic
+
+client = anthropic.Anthropic(api_key="sk-ant-ここに貼る")
+
+def ask_claude(prompt):
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=800,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.content[0].text
+
+def simple_rag(question, knowledge_file):
+    """シンプルRAG：ファイルを読んでプロンプトに埋め込む"""
+
+    # ① 知識ベース（外部情報）を読み込む
+    with open(knowledge_file, "r", encoding="utf-8") as f:
+        knowledge = f.read()
+
+    # ② 情報をプロンプトに埋め込んでLLMに渡す
+    prompt = f"""以下の参考情報を元に、質問に答えてください。
+参考情報に書かれていないことは「情報がありません」と答えてください。
+
+【参考情報】
+{knowledge}
+
+【質問】
+{question}"""
+
+    # ③ LLMが情報を元に回答生成
+    return ask_claude(prompt)
+
+# 実行例
+answer = simple_rag(
+    question="営業部の連絡先を教えてください",
+    knowledge_file="company_info.txt"
+)
+print(answer)</pre>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">company_info.txt（知識ベースの例）</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre">会社名：株式会社サンプル
+所在地：東京都渋谷区〇〇1-2-3
+設立：2010年4月
+
+【部署連絡先】
+営業部：sales@sample.co.jp / 03-1234-5678
+人事部：hr@sample.co.jp / 03-1234-5679
+技術部：tech@sample.co.jp / 03-1234-5680
+
+【営業時間】
+平日 9:00〜18:00（土日祝休み）</pre>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">複数ファイルに対応したRAG</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">コピー</button></div>
+      <pre">import anthropic, os
+
+client = anthropic.Anthropic(api_key="sk-ant-ここに貼る")
+
+def multi_file_rag(question, knowledge_dir):
+    """フォルダ内の全テキストファイルを知識ベースとして使うRAG"""
+
+    # フォルダ内の全.txtファイルを読み込む
+    knowledge_parts = []
+    for filename in os.listdir(knowledge_dir):
+        if filename.endswith(".txt"):
+            filepath = os.path.join(knowledge_dir, filename)
+            with open(filepath, "r", encoding="utf-8") as f:
+                content = f.read()
+            knowledge_parts.append(f"=== {filename} ===\n{content}")
+
+    all_knowledge = "\n\n".join(knowledge_parts)
+
+    prompt = f"""以下のドキュメント群を参考に質問に答えてください。
+
+{all_knowledge}
+
+【質問】
+{question}"""
+
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=800,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.content[0].text
+
+# 使い方
+# knowledge/ フォルダに company_info.txt, faq.txt, manual.txt を置く
+answer = multi_file_rag("有給休暇の申請方法を教えてください", "knowledge")
+print(answer)</pre>
+    </div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">RAGの限界と注意点</div>
+    <div class="point-box"><ul class="point-list">
+      <li>コンテキストウィンドウの上限：渡せる情報量に限りがある（数万〜数十万トークン）</li>
+      <li>情報が多すぎると重要な部分が埋もれる → 関連部分だけを絞って渡す工夫が必要</li>
+      <li>情報の品質がそのまま回答品質に影響する → ゴミを渡すとゴミが返る</li>
+      <li>最新情報を渡しても、LLM自体の限界（ハルシネーション）は残る → 第16回で詳述</li>
+    </ul></div>
+  </div>
+
+  <div class="content-block">
+    <div class="block-label">確認課題</div>
+    <div class="task-box">
+      <div class="task-box-title">✓ この講義の課題</div>
+      <ul class="task-list">
+        <li>company_info.txt を作って自社（または架空の会社）情報を書く</li>
+        <li>simple_rag() を実装してファイルの情報を元に質問に答えることを確認する</li>
+        <li>RAGなし（直接質問）とRAGあり（ファイルを渡す）で回答品質を比較する</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="detail-nav">
+    <a class="detail-nav-btn" href="lecture14.html">← 前の講義</a>
+    <a class="detail-nav-btn" href="lecture_site.html">一覧に戻る</a>
+    <a class="detail-nav-btn" href="lecture16.html">次の講義 →</a>
+  </div>
+</main>
+<footer>Python講義サイト — LECTURE 15 / 17</footer>
+<script>
+function copyCode(btn) {
+  navigator.clipboard.writeText(btn.closest('.code-block').querySelector('pre').textContent)
+    .then(()=>{ btn.textContent='コピー済'; setTimeout(()=>btn.textContent='コピー',1500); });
+}
+</script>
+</body>
+</html>
